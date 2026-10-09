@@ -4,7 +4,7 @@ A small, gallery-style browser for [The Metropolitan Museum of Art](https://www.
 
 > An unofficial project. It is not affiliated with The Met.
 
-**Live:** _add your Vercel URL here_
+**Live:** https://svelte-project.vercel.app/
 
 ## Features
 
