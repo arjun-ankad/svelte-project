@@ -32,11 +32,12 @@ const CONCURRENCY = 6;
  */
 
 /**
- * Top Art by default, or full-text search when `q` is given.
+ * The landing page's highlights, or search results when `q` is given. Searches put the Met's
+ * most notable matches first: highlighted paintings, then other highlights, then everything else.
  *
- * The Met's search returns only ids, and many matching works have no open-access image.
- * So this walks the results in batches, fetching each batch's objects in parallel, until it has
- * a full page of works with images (or runs out). `next` is the offset to continue from.
+ * Search returns only ids, and many matching works have no open-access image. So this walks
+ * the ranked ids in batches, fetching each batch's objects in parallel, until it has a full page
+ * of works with images (or runs out). `next` is the position to continue from.
  * @param {typeof fetch} fetch
  * @param {{ q?: string, start?: number }} options
  * @returns {Promise<{ artworks: Artwork[], next: number | null, total: number }>}
@@ -45,30 +46,21 @@ export async function getArtworks(fetch, { q = '', start = 0 } = {}) {
 	/** @type {Artwork[]} */
 	const artworks = [];
 	let offset = start;
+	let length = 0;
 	let total = 0;
 
 	for (let batch = 0; batch < MAX_BATCHES && artworks.length < PAGE_SIZE; batch++) {
-		const params = new URLSearchParams({
-			q: q || '*',
-			hasImages: 'true',
-			offset: String(offset),
-			limit: String(PAGE_SIZE)
-		});
+		const page = await getIdPage(fetch, q, offset);
+		({ length, total } = page);
+		if (page.ids.length === 0) break;
 
-		if (!q) {
-			params.set('isHighlight', 'true');
-			params.set('departmentId', TOP_ART_DEPARTMENT);
-		}
-
-		const result = await cachedRequest(fetch, `${API}/v1.1/search?${params}`);
-		const ids = result.objectIDs ?? [];
-		total = result.total;
-
-		const results = await mapWithLimit(ids, CONCURRENCY, (/** @type {number} */ id) =>
-			getObject(fetch, id).then(
-				(object) => ({ object, failed: false }),
-				() => ({ object: null, failed: true })
-			)
+		const results = await mapWithLimit(page.ids, CONCURRENCY, (id) =>
+			id === null
+				? Promise.resolve({ object: null, failed: false })
+				: getObject(fetch, id).then(
+						(object) => ({ object, failed: false }),
+						() => ({ object: null, failed: true })
+					)
 		);
 
 		for (const { object, failed } of results) {
@@ -83,11 +75,68 @@ export async function getArtworks(fetch, { q = '', start = 0 } = {}) {
 			if (object?.primaryImageSmall) artworks.push(toArtwork(object));
 			if (artworks.length === PAGE_SIZE) break;
 		}
-
-		if (ids.length < PAGE_SIZE) break;
 	}
 
-	return { artworks, next: offset < total ? offset : null, total };
+	return { artworks, next: offset < length ? offset : null, total };
+}
+
+/**
+ * One page of the ordered ids behind a feed, starting at `offset`. `length` is the size of the
+ * whole ordered list; `total` is the number of matching works. Featured works reappear in the
+ * general results, so there they come back as `null`: skipped, but still counted as a position.
+ * @param {typeof fetch} fetch
+ * @param {string} q
+ * @param {number} offset
+ * @returns {Promise<{ ids: (number | null)[], length: number, total: number }>}
+ */
+async function getIdPage(fetch, q, offset) {
+	if (!q) {
+		const top = await search(fetch, {
+			q: '*',
+			isHighlight: 'true',
+			departmentId: TOP_ART_DEPARTMENT,
+			offset: String(offset)
+		});
+		return { ids: top.objectIDs ?? [], length: top.total, total: top.total };
+	}
+
+	const featured = await getFeaturedIds(fetch, q);
+	const rest = await search(fetch, { q, offset: String(Math.max(0, offset - featured.length)) });
+	const length = featured.length + rest.total;
+
+	if (offset < featured.length) {
+		return { ids: featured.slice(offset, offset + PAGE_SIZE), length, total: rest.total };
+	}
+
+	const seen = new Set(featured);
+	const ids = (rest.objectIDs ?? []).map((/** @type {number} */ id) => (seen.has(id) ? null : id));
+	return { ids, length, total: rest.total };
+}
+
+/**
+ * The Met has no popularity data, but curators flag its best-known works as highlights.
+ * Returns the highlights matching `q`, paintings first. Each list fits in one request.
+ * @param {typeof fetch} fetch
+ * @param {string} q
+ * @returns {Promise<number[]>}
+ */
+async function getFeaturedIds(fetch, q) {
+	const [paintings, highlights] = await Promise.all([
+		search(fetch, { q, isHighlight: 'true', medium: 'Paintings', limit: '500' }),
+		search(fetch, { q, isHighlight: 'true', limit: '500' })
+	]);
+
+	return [...new Set([...(paintings.objectIDs ?? []), ...(highlights.objectIDs ?? [])])];
+}
+
+/**
+ * A cached search for works with images. Pages are `PAGE_SIZE` long unless `limit` is given.
+ * @param {typeof fetch} fetch
+ * @param {Record<string, string>} filters
+ */
+function search(fetch, filters) {
+	const params = new URLSearchParams({ hasImages: 'true', limit: String(PAGE_SIZE), ...filters });
+	return cachedRequest(fetch, `${API}/v1.1/search?${params}`);
 }
 
 /**

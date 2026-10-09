@@ -12,6 +12,7 @@ A small, gallery-style browser for [The Metropolitan Museum of Art](https://www.
   - Every column moves at its own speed.
   - While you're idle, the page drifts slowly downward. Any scroll, tap or key press hands control straight back.
   - After the last highlight, the wall loops back to the first.
+- **Ranked results:** searches and collections show the Met's best-known matches first: curator-picked highlighted paintings, then other highlights, then everything else.
 - **Search:** a floating glass search bar with debounced input. The query lives in the URL, so results are shareable and the back button works. More results load automatically as you scroll.
 - **Infinite loading:** if you scroll faster than the content loads, a spinner appears where a column runs out. Failed requests retry quietly in the background, with increasing waits between attempts, until they succeed.
 - **Detail view:** a large image and the full object record, with a back link that returns to the exact search you came from
@@ -32,6 +33,7 @@ All requests live in [`src/lib/api.js`](src/lib/api.js).
 ### Working with the Met API
 
 - **Search returns only object ids.** Each page therefore fetches its objects separately, at most 6 at a time.
+- **The API has no popularity data.** Curator-flagged highlights stand in for it. Each search fetches its highlighted paintings and other highlights as two full id lists (one request each), puts them first, and skips them when they reappear in the general results.
 - **Many matching works have no open-access image.** `getArtworks` walks through the results until it has a full page of works with images (at most 2 batches), then returns a cursor for Load more.
 - **The API blocks bursts of more than about 70 requests.** For that reason:
   - The app renders in the browser (`ssr = false`), so requests come from each visitor rather than from one shared server IP.
