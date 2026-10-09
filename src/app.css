@@ -1,0 +1,168 @@
+:root {
+	/* Color */
+	--color-bg: #efeeea;
+	--color-surface: #f8f7f4;
+	--color-placeholder: #e2e0da;
+	--color-text: #1c1b19;
+	--color-muted: #6c6a64;
+	--color-line: rgb(28 27 25 / 0.1);
+	--color-accent: #8c4a3a;
+	--color-accent-soft: rgb(140 74 58 / 0.12);
+
+	/* Glass */
+	--glass-bg: rgb(255 255 255 / 0.55);
+	--glass-bg-strong: rgb(255 255 255 / 0.72);
+	--glass-border: rgb(255 255 255 / 0.7);
+	--glass-blur: blur(20px) saturate(160%);
+
+	/* Type */
+	--font-serif: 'Fraunces', Georgia, serif;
+	--font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+	--text-xs: 0.75rem;
+	--text-sm: 0.875rem;
+	--text-base: 1rem;
+	--text-lg: 1.25rem;
+	--text-xl: 1.75rem;
+	--text-2xl: clamp(2rem, 1.4rem + 2.4vw, 3rem);
+
+	/* Space */
+	--space-1: 0.25rem;
+	--space-2: 0.5rem;
+	--space-3: 0.75rem;
+	--space-4: 1rem;
+	--space-5: 1.5rem;
+	--space-6: 2rem;
+	--space-7: 3rem;
+	--space-8: 4rem;
+	--gutter: clamp(1rem, 0.5rem + 2vw, 2.5rem);
+
+	/* Shape & depth */
+	--radius-sm: 0.5rem;
+	--radius-md: 0.875rem;
+	--radius-lg: 1.5rem;
+	--radius-pill: 999px;
+	--shadow-sm: 0 1px 2px rgb(28 27 25 / 0.06), 0 1px 1px rgb(28 27 25 / 0.04);
+	--shadow-md: 0 10px 30px -12px rgb(28 27 25 / 0.25), 0 2px 6px rgb(28 27 25 / 0.06);
+	--shadow-glass: 0 12px 40px -12px rgb(28 27 25 / 0.22), inset 0 1px 0 rgb(255 255 255 / 0.6);
+
+	/* Motion */
+	--ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+	--duration: 240ms;
+
+	color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	-webkit-text-size-adjust: 100%;
+}
+
+body {
+	margin: 0;
+	min-height: 100dvh;
+	background: var(--color-bg);
+	color: var(--color-text);
+	font-family: var(--font-sans);
+	font-size: var(--text-base);
+	line-height: 1.5;
+	-webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+	margin: 0;
+	font-family: var(--font-serif);
+	font-weight: 500;
+	line-height: 1.15;
+	letter-spacing: -0.01em;
+}
+
+p {
+	margin: 0;
+}
+
+a {
+	color: inherit;
+}
+
+img {
+	display: block;
+	max-width: 100%;
+}
+
+button,
+input {
+	font: inherit;
+	color: inherit;
+}
+
+button {
+	cursor: pointer;
+}
+
+:focus-visible {
+	outline: 2px solid var(--color-accent);
+	outline-offset: 3px;
+}
+
+.visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+/* A frosted surface, shared by the menu, header controls and search bar. */
+.glass {
+	background: var(--glass-bg);
+	border: 1px solid var(--glass-border);
+	box-shadow: var(--shadow-glass);
+	-webkit-backdrop-filter: var(--glass-blur);
+	backdrop-filter: var(--glass-blur);
+}
+
+/* A rounded glass link or button, used for secondary actions. */
+.pill {
+	display: inline-flex;
+	align-items: center;
+	padding: var(--space-3) var(--space-5);
+	border-radius: var(--radius-pill);
+	font-size: var(--text-sm);
+	font-weight: 500;
+	text-decoration: none;
+	transition: background-color var(--duration) var(--ease-out);
+}
+
+a.pill:hover,
+button.pill:hover {
+	background: var(--glass-bg-strong);
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+	animation-duration: 200ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
+
+	::view-transition-group(*),
+	::view-transition-old(*),
+	::view-transition-new(*) {
+		animation: none !important;
+	}
+}
