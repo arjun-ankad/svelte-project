@@ -8,7 +8,7 @@ A small, gallery-style browser for [The Metropolitan Museum of Art](https://www.
 
 ## Features
 
-- **Landing page:** an endless wall of the Met's highlighted European paintings, each shown complete and uncropped.
+- **Landing page:** an endless wall of the Met's highlighted paintings (about 420 from across the museum), each shown complete and uncropped. The order is reshuffled on every visit.
   - Every column moves at its own speed.
   - While you're idle, the page drifts slowly downward. Any scroll, tap or key press hands control straight back.
   - After the last highlight, the wall loops back to the first.

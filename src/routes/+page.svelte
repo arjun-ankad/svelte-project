@@ -28,7 +28,7 @@
 		</p>
 	</div>
 {:else}
-	<h1 class="visually-hidden">Highlights from The Met’s European paintings</h1>
+	<h1 class="visually-hidden">Highlighted paintings from The Met</h1>
 {/if}
 
 <section class="results">

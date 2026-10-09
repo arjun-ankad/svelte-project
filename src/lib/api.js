@@ -4,9 +4,6 @@ const API = 'https://collectionapi.metmuseum.org/public/collection';
 
 export const PAGE_SIZE = 24;
 
-// "Top Art": highlighted works from the European Paintings department.
-const TOP_ART_DEPARTMENT = '11';
-
 // Keep each page to at most 2 × 25 requests, 6 at a time, well inside the API's burst limit.
 const MAX_BATCHES = 2;
 const CONCURRENCY = 6;
@@ -32,7 +29,7 @@ const CONCURRENCY = 6;
  */
 
 /**
- * The landing page's highlights, or search results when `q` is given. Searches put the Met's
+ * A shuffled wall of highlighted paintings for the landing page, or search results when `q` is given. Searches put the Met's
  * most notable matches first: highlighted paintings, then other highlights, then everything else.
  *
  * Search returns only ids, and many matching works have no open-access image. So this walks
@@ -72,7 +69,7 @@ export async function getArtworks(fetch, { q = '', start = 0 } = {}) {
 			}
 
 			offset += 1;
-			if (object?.primaryImageSmall) artworks.push(toArtwork(object));
+			if (object?.primaryImageSmall && (q || isPainting(object))) artworks.push(toArtwork(object));
 			if (artworks.length === PAGE_SIZE) break;
 		}
 	}
@@ -91,13 +88,8 @@ export async function getArtworks(fetch, { q = '', start = 0 } = {}) {
  */
 async function getIdPage(fetch, q, offset) {
 	if (!q) {
-		const top = await search(fetch, {
-			q: '*',
-			isHighlight: 'true',
-			departmentId: TOP_ART_DEPARTMENT,
-			offset: String(offset)
-		});
-		return { ids: top.objectIDs ?? [], length: top.total, total: top.total };
+		const ids = await getLandingIds(fetch);
+		return { ids: ids.slice(offset, offset + PAGE_SIZE), length: ids.length, total: ids.length };
 	}
 
 	const featured = await getFeaturedIds(fetch, q);
@@ -111,6 +103,52 @@ async function getIdPage(fetch, q, offset) {
 	const seen = new Set(featured);
 	const ids = (rest.objectIDs ?? []).map((/** @type {number} */ id) => (seen.has(id) ? null : id));
 	return { ids, length, total: rest.total };
+}
+
+/** @type {Promise<number[]> | undefined} */
+let landingIds;
+
+/**
+ * Every highlighted painting in the museum (about 420, in one request), shuffled once per
+ * page load: each visit opens on a different selection, while navigating within a visit
+ * keeps the same order so the back button returns to the same wall.
+ * @param {typeof fetch} fetch
+ */
+function getLandingIds(fetch) {
+	landingIds ??= search(fetch, { q: '*', isHighlight: 'true', medium: 'Paintings', limit: '500' }).then(
+		(result) => shuffle(result.objectIDs ?? []),
+		(err) => {
+			landingIds = undefined; // let the next attempt retry
+			throw err;
+		}
+	);
+
+	return landingIds;
+}
+
+/**
+ * The `medium=Paintings` filter also matches painted objects (a harpsichord, a screen),
+ * so the landing wall double-checks the Met's own classification.
+ * @param {any} object
+ */
+function isPainting(object) {
+	return /painting/i.test(object.classification ?? '');
+}
+
+/**
+ * A shuffled copy of `items` (Fisher–Yates).
+ * @template T
+ * @param {T[]} items
+ */
+function shuffle(items) {
+	const shuffled = [...items];
+
+	for (let i = shuffled.length - 1; i > 0; i--) {
+		const j = Math.floor(Math.random() * (i + 1));
+		[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+	}
+
+	return shuffled;
 }
 
 /**
