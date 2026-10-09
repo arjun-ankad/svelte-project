@@ -8,6 +8,7 @@
 	--color-line: rgb(28 27 25 / 0.1);
 	--color-accent: #8c4a3a;
 	--color-accent-soft: rgb(140 74 58 / 0.12);
+	--color-live: #39ff14;
 
 	/* Glass: a faint dark hairline outside, a white highlight inside */
 	--glass-bg: rgb(255 255 255 / 0.5);

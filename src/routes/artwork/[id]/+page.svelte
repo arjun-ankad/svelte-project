@@ -99,7 +99,6 @@
 
 	figure {
 		margin: 0;
-		border-radius: var(--radius-lg);
 		overflow: hidden;
 		box-shadow: var(--shadow-md);
 	}

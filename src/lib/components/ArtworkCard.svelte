@@ -26,7 +26,6 @@
 
 	a {
 		display: block;
-		border-radius: var(--radius-sm);
 		overflow: hidden;
 		transition:
 			transform 400ms var(--ease-out),

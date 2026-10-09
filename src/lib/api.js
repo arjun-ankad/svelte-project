@@ -64,9 +64,21 @@ export async function getArtworks(fetch, { q = '', start = 0 } = {}) {
 		const ids = result.objectIDs ?? [];
 		total = result.total;
 
-		const objects = await mapWithLimit(ids, CONCURRENCY, (/** @type {number} */ id) => getObject(fetch, id));
+		const results = await mapWithLimit(ids, CONCURRENCY, (/** @type {number} */ id) =>
+			getObject(fetch, id).then(
+				(object) => ({ object, failed: false }),
+				() => ({ object: null, failed: true })
+			)
+		);
 
-		for (const object of objects) {
+		for (const { object, failed } of results) {
+			if (failed) {
+				// Stop at the first failed request (usually rate limiting), so that object is
+				// retried next time rather than skipped. With nothing to show, report failure.
+				if (artworks.length === 0) throw new Error('The Met is not responding');
+				return { artworks, next: offset, total };
+			}
+
 			offset += 1;
 			if (object?.primaryImageSmall) artworks.push(toArtwork(object));
 			if (artworks.length === PAGE_SIZE) break;
@@ -169,13 +181,15 @@ function cachedRequest(fetch, url) {
 }
 
 /**
- * A single object, or `null` if it's missing or the request fails,
- * so one bad object leaves a gap instead of failing the whole page.
+ * A single object, or `null` if it no longer exists. Other failures are thrown.
  * @param {typeof fetch} fetch
  * @param {number} id
  */
 function getObject(fetch, id) {
-	return cachedRequest(fetch, `${API}/v1/objects/${id}`).catch(() => null);
+	return cachedRequest(fetch, `${API}/v1/objects/${id}`).catch((err) => {
+		if (err.status === 404) return null;
+		throw err;
+	});
 }
 
 /**

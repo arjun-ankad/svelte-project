@@ -1,62 +1,62 @@
 <script>
+	import { onDestroy } from 'svelte';
 	import { getArtworks } from '#lib/api.js';
 	import ArtworkGrid from './ArtworkGrid.svelte';
 
 	/**
-	 * The first page comes from the route's `load`; later pages are appended here.
+	 * An infinite list: the first page comes from the route's `load`, and more is fetched
+	 * as the visitor nears the end. On the landing page it drifts and never ends.
 	 * @type {{
 	 *   q: string,
-	 *   initial: { artworks: import('#lib/api.js').Artwork[], next: number | null }
+	 *   initial: { artworks: import('#lib/api.js').Artwork[], next: number | null },
+	 *   landing?: boolean
 	 * }}
 	 */
-	let { q, initial } = $props();
+	let { q, initial, landing = false } = $props();
 
 	// Writable deriveds: they start from `initial` and reset if it changes, but can be added to.
 	let artworks = $derived(initial.artworks);
-	let next = $derived(initial.next);
+	let next = $derived(initial.next ?? (landing ? 0 : null));
 
-	let loadingMore = $state(false);
-	let failed = $state(false);
+	let loading = $state(false);
+	let destroyed = false;
+	onDestroy(() => (destroyed = true));
+
+	/** @param {number} ms */
+	const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 	async function loadMore() {
-		if (next === null) return;
+		if (loading || next === null) return;
+		loading = true;
 
-		loadingMore = true;
-		failed = false;
+		// Keep going until something new arrives. Failures retry quietly in the background,
+		// backing off up to 15s, while the spinner stays up.
+		let delay = 1000;
 
-		try {
-			const more = await getArtworks(fetch, { q, start: next });
-			const seen = new Set(artworks.map((artwork) => artwork.id));
+		while (!destroyed && next !== null) {
+			try {
+				const more = await getArtworks(fetch, { q, start: next });
+				if (destroyed) return;
 
-			artworks = [...artworks, ...more.artworks.filter((artwork) => !seen.has(artwork.id))];
-			next = more.next;
-		} catch {
-			failed = true;
-		} finally {
-			loadingMore = false;
+				artworks = [...artworks, ...more.artworks];
+				// The landing page never ends: after the last highlight it starts over.
+				next = more.next ?? (landing ? 0 : null);
+				delay = 1000;
+
+				if (more.artworks.length > 0) break;
+			} catch {
+				await wait(delay);
+				delay = Math.min(delay * 2, 15_000);
+			}
 		}
+
+		loading = false;
 	}
 </script>
 
-<ArtworkGrid {artworks} />
-
-{#if next !== null}
-	<div class="more">
-		<button type="button" class="pill glass" onclick={loadMore} disabled={loadingMore}>
-			{loadingMore ? 'Loading…' : failed ? 'Couldn’t load more. Try again' : 'Load more'}
-		</button>
-	</div>
-{/if}
-
-<style>
-	.more {
-		display: flex;
-		justify-content: center;
-		margin-top: var(--space-6);
-	}
-
-	button:disabled {
-		cursor: progress;
-		opacity: 0.6;
-	}
-</style>
+<ArtworkGrid
+	{artworks}
+	drifting={landing}
+	loadingMore={loading}
+	onneedmore={next === null ? undefined : loadMore}
+/>

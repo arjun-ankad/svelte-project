@@ -59,10 +59,11 @@
 	}
 
 	.dot {
-		width: 3px;
-		height: 3px;
+		width: 7px;
+		height: 7px;
 		border-radius: 50%;
-		background: var(--color-muted);
+		background: var(--color-live);
+		box-shadow: 0 0 6px var(--color-live);
 	}
 
 	.label {

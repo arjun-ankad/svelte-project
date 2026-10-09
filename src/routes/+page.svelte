@@ -5,7 +5,6 @@
 	import SearchBar from '#lib/components/SearchBar.svelte';
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import ErrorState from '#lib/components/ErrorState.svelte';
-	import { autoScroll } from '#lib/attachments/autoScroll.js';
 
 	/** @type {import('./$types').PageProps} */
 	let { data } = $props();
@@ -32,8 +31,7 @@
 	<h1 class="visually-hidden">Highlights from The Met’s European paintings</h1>
 {/if}
 
-<!-- The landing page drifts slowly while the visitor is idle; searches never do. -->
-<section class="results" {@attach !data.q && autoScroll()}>
+<section class="results">
 	{#await data.results}
 		<ArtworkGrid loading />
 	{:then results}
@@ -45,7 +43,8 @@
 				<a class="pill glass" href="/">Back to highlights</a>
 			</EmptyState>
 		{:else}
-			<ArtworkFeed q={data.q} initial={results} />
+			<!-- The landing page drifts while idle and never ends; searches scroll normally. -->
+			<ArtworkFeed q={data.q} initial={results} landing={!data.q} />
 		{/if}
 	{:catch}
 		<ErrorState message="The Met’s collection is unreachable right now." onretry={invalidateAll} />

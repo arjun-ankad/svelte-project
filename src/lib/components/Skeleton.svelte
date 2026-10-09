@@ -7,7 +7,6 @@
 
 <style>
 	.tile {
-		border-radius: var(--radius-sm);
 		background: linear-gradient(
 			100deg,
 			var(--color-placeholder) 40%,

@@ -8,8 +8,12 @@ A small, gallery-style browser for [The Metropolitan Museum of Art](https://www.
 
 ## Features
 
-- **Landing page:** the Met's highlighted European paintings in a tight masonry grid, each shown complete and uncropped. While you're idle the page drifts slowly downward, and any scroll, tap or key press hands control straight back.
-- **Search:** a floating glass search bar with debounced input. The query lives in the URL, so results are shareable and the back button works. Load more appends further results.
+- **Landing page:** an endless wall of the Met's highlighted European paintings, each shown complete and uncropped.
+  - Every column moves at its own speed.
+  - While you're idle, the page drifts slowly downward. Any scroll, tap or key press hands control straight back.
+  - After the last highlight, the wall loops back to the first.
+- **Search:** a floating glass search bar with debounced input. The query lives in the URL, so results are shareable and the back button works. More results load automatically as you scroll.
+- **Infinite loading:** if you scroll faster than the content loads, a spinner appears where a column runs out. Failed requests retry quietly in the background, with increasing waits between attempts, until they succeed.
 - **Detail view:** a large image and the full object record, with a back link that returns to the exact search you came from
 - **Favorites:** save works with the heart button. They persist in `localStorage`, and the count shows in the menu.
 - **Header:** pinned while you scroll. It holds a frosted-glass menu with Favorites and curated collections, plus the live time and weather in New York.
@@ -31,8 +35,8 @@ All requests live in [`src/lib/api.js`](src/lib/api.js).
 - **Many matching works have no open-access image.** `getArtworks` walks through the results until it has a full page of works with images (at most 2 batches), then returns a cursor for Load more.
 - **The API blocks bursts of more than about 70 requests.** For that reason:
   - The app renders in the browser (`ssr = false`), so requests come from each visitor rather than from one shared server IP.
-  - Every response is cached in memory, so going back to a list or opening a tile costs no extra requests.
-  - A failed object leaves a gap in the grid instead of failing the page.
+  - Every response is cached in memory, so going back to a list, opening a tile or looping the wall costs no extra requests.
+  - A batch stops at the first failed request, so that artwork is retried later rather than skipped.
 
 ## How it's built
 
@@ -42,9 +46,10 @@ src/
   lib/
     api.js                      every fetch, plus caching and response shaping
     stores/favorites.svelte.js  shared rune-based store ($state + $derived), persisted to localStorage
-    attachments/autoScroll.js   idle auto-scroll for the landing page ({@attach} factory)
+    attachments/drift.js        per-column speeds and idle auto-scroll on the landing page
+    attachments/nearViewport.js IntersectionObserver trigger for infinite loading
     components/                 Header, Menu, NewYorkNow, SearchBar, ArtworkFeed, ArtworkGrid,
-                                ArtworkCard, ArtImage, FavoriteButton, Skeleton, EmptyState, ErrorState
+                                ArtworkCard, ArtImage, FavoriteButton, Skeleton, Spinner, EmptyState, ErrorState
   routes/
     +layout.js / +layout.svelte header, weather, view transitions
     +page.js / +page.svelte     highlights and search (reads ?q=)
@@ -57,9 +62,12 @@ src/
 - **State:**
   - The URL holds the search.
   - A shared class with `$state` holds favorites.
-  - `ArtworkFeed` uses writable `$derived` values for Load more.
+  - `ArtworkFeed` extends its list with writable `$derived` values as you scroll.
   - UI-only state stays local to its component, such as whether an image has loaded or the menu is open.
-- **Masonry grid:** `ArtworkGrid` deals artworks into columns, and the column count is a `$derived` value from the container's bound width. Each image finishing loading only moves the tiles below it, rather than reshuffling the whole layout as CSS columns would.
+- **Masonry grid:** `ArtworkGrid` deals artworks into columns, and the column count is a `$derived` value from the container's bound width.
+  - Each image finishing loading only moves the tiles below it, rather than reshuffling the whole layout as CSS columns would.
+  - On the landing page, faster columns get proportionally more artworks, so none of them runs dry first.
+- **Smooth drifting:** browsers scroll the window in whole pixels, which makes very slow scrolling step visibly. `drift` scrolls the window in whole pixels and covers the leftover fraction with a GPU transform on each column, so motion stays smooth.
 - **Styling:** hand-written scoped CSS plus one tokens file. There are no UI libraries and no runtime dependencies.
 
 ## Run locally
