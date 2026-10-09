@@ -1,8 +1,12 @@
-<div class="tile" aria-hidden="true"></div>
+<script>
+	/** @type {{ ratio?: string }} */
+	let { ratio = '4 / 5' } = $props();
+</script>
+
+<div class="tile" style:aspect-ratio={ratio} aria-hidden="true"></div>
 
 <style>
 	.tile {
-		aspect-ratio: 1;
 		border-radius: var(--radius-sm);
 		background: linear-gradient(
 			100deg,

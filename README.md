@@ -8,11 +8,11 @@ A small, gallery-style browser for [The Metropolitan Museum of Art](https://www.
 
 ## Features
 
-- **Top Art:** a tight grid of square tiles showing the Met's highlighted European paintings
+- **Landing page:** the Met's highlighted European paintings in a tight masonry grid, each shown complete and uncropped. While you're idle the page drifts slowly downward, and any scroll, tap or key press hands control straight back.
 - **Search:** a floating glass search bar with debounced input. The query lives in the URL, so results are shareable and the back button works. Load more appends further results.
 - **Detail view:** a large image and the full object record, with a back link that returns to the exact search you came from
 - **Favorites:** save works with the heart button. They persist in `localStorage`, and the count shows in the menu.
-- **Header:** a glass menu with curated collections, plus the live time and weather in New York
+- **Header:** pinned while you scroll. It holds a frosted-glass menu with Favorites and curated collections, plus the live time and weather in New York.
 - **States:** skeleton loading, empty results, API errors with retry, missing images and a 404 page
 - **Motion:** View Transitions morph a tile into its detail page, and all motion respects `prefers-reduced-motion`
 
@@ -42,11 +42,12 @@ src/
   lib/
     api.js                      every fetch, plus caching and response shaping
     stores/favorites.svelte.js  shared rune-based store ($state + $derived), persisted to localStorage
+    attachments/autoScroll.js   idle auto-scroll for the landing page ({@attach} factory)
     components/                 Header, Menu, NewYorkNow, SearchBar, ArtworkFeed, ArtworkGrid,
                                 ArtworkCard, ArtImage, FavoriteButton, Skeleton, EmptyState, ErrorState
   routes/
     +layout.js / +layout.svelte header, weather, view transitions
-    +page.js / +page.svelte     Top Art and search (reads ?q=)
+    +page.js / +page.svelte     highlights and search (reads ?q=)
     artwork/[id]/               detail view (404 for unknown ids)
     favorites/                  saved works
     +error.svelte               404 and error page
@@ -58,6 +59,7 @@ src/
   - A shared class with `$state` holds favorites.
   - `ArtworkFeed` uses writable `$derived` values for Load more.
   - UI-only state stays local to its component, such as whether an image has loaded or the menu is open.
+- **Masonry grid:** `ArtworkGrid` deals artworks into columns, and the column count is a `$derived` value from the container's bound width. Each image finishing loading only moves the tiles below it, rather than reshuffling the whole layout as CSS columns would.
 - **Styling:** hand-written scoped CSS plus one tokens file. There are no UI libraries and no runtime dependencies.
 
 ## Run locally

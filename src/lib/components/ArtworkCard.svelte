@@ -11,7 +11,7 @@
 
 <article class={['card', { saved: favorites.has(artwork.id) }]}>
 	<a href="/artwork/{artwork.id}" title={label} style:view-transition-name="art-{artwork.id}">
-		<ArtImage src={artwork.image} alt={label} square {eager} />
+		<ArtImage src={artwork.image} alt={label} {eager} />
 	</a>
 
 	<div class="favorite">

@@ -23,7 +23,7 @@
 	<ArtworkGrid loading />
 {:else if favorites.count === 0}
 	<EmptyState title="No favorites yet" message="Tap the heart on any artwork to keep it here.">
-		<a class="pill glass" href="/">Browse Top Art</a>
+		<a class="pill glass" href="/">Browse highlights</a>
 	</EmptyState>
 {:else}
 	<ArtworkGrid artworks={favorites.items} />

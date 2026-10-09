@@ -1,21 +1,21 @@
 <script>
 	/**
-	 * `square` crops to a square tile; otherwise the image keeps its natural shape.
-	 * @type {{ src: string | null, alt: string, square?: boolean, eager?: boolean }}
+	 * Shows the complete image at its natural shape, fading in once loaded.
+	 * @type {{ src: string | null, alt: string, eager?: boolean }}
 	 */
-	let { src, alt, square = false, eager = false } = $props();
+	let { src, alt, eager = false } = $props();
 
 	let loaded = $state(false);
 	let failed = $state(false);
 
-	// Images that finished loading before hydration never fire `onload`.
+	// Images that finished loading before the component mounted never fire `onload`.
 	/** @param {HTMLImageElement} img */
 	function checkComplete(img) {
 		if (img.complete && img.naturalWidth > 0) loaded = true;
 	}
 </script>
 
-<div class={['frame', { square, loaded }]}>
+<div class={['frame', { loaded }]}>
 	{#if src && !failed}
 		<img
 			{src}
@@ -49,17 +49,14 @@
 		background: var(--color-placeholder);
 	}
 
-	/* Hold a placeholder shape until a natural-size image arrives. */
+	/* Hold a placeholder shape until the image arrives and sets its own height. */
 	.frame:not(.loaded) {
 		aspect-ratio: 4 / 5;
 	}
 
-	.frame.square {
-		aspect-ratio: 1;
-	}
-
 	img {
 		width: 100%;
+		height: auto;
 		opacity: 0;
 		transform: scale(1.03);
 		transition:
@@ -67,12 +64,9 @@
 			transform 700ms var(--ease-out);
 	}
 
-	.square img,
 	.frame:not(.loaded) img {
 		position: absolute;
 		inset: 0;
-		height: 100%;
-		object-fit: cover;
 	}
 
 	.loaded img {

@@ -63,7 +63,6 @@
 			aria-label="Main"
 			transition:fly={{ y: -8, duration: prefersReducedMotion.current ? 0 : 220 }}
 		>
-			<a href="/" aria-current={onHome && !q ? 'page' : undefined}>Top Art</a>
 			<a href="/favorites" aria-current={page.url.pathname === '/favorites' ? 'page' : undefined}>
 				Favorites
 				<span class="count" aria-label="{favorites.count} saved">{favorites.count}</span>
@@ -126,63 +125,45 @@
 		left: 0;
 		z-index: 20;
 		display: grid;
-		gap: var(--space-2);
-		width: min(17rem, calc(100vw - 2 * var(--gutter)));
-		padding: var(--space-3);
-		border-radius: var(--radius-lg);
+		gap: 2px;
+		width: min(20rem, calc(100vw - 2 * var(--gutter)));
+		padding: var(--space-4);
+		border-radius: var(--radius-md);
 		background: var(--glass-bg-strong);
 	}
 
-	/* Glass pill buttons, with the same edge as other glass surfaces */
+	/* Plain text links; a soft dark rounded highlight appears on hover. */
 	a {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		padding: var(--space-3) var(--space-4);
-		border-radius: var(--radius-pill);
-		background: var(--glass-bg);
-		border: 1px solid var(--glass-line);
-		box-shadow: var(--glass-highlight);
-		font-size: var(--text-sm);
+		border-radius: var(--radius-sm);
+		font-size: var(--text-base);
 		font-weight: 500;
-		letter-spacing: -0.005em;
+		letter-spacing: -0.01em;
 		text-decoration: none;
-		transition:
-			background-color var(--duration) var(--ease-out),
-			transform var(--duration) var(--ease-out);
+		transition: background-color var(--duration) var(--ease-out);
 	}
 
-	a:hover {
-		background: var(--glass-bg-strong);
-		transform: translateX(2px);
+	a:hover,
+	a:focus-visible {
+		background: rgb(28 27 25 / 0.07);
 	}
 
 	a[aria-current='page'] {
-		background: var(--color-text);
-		border-color: var(--color-text);
-		box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.15);
-		color: var(--color-surface);
+		background: rgb(28 27 25 / 0.04);
+		font-weight: 600;
 	}
 
 	.count {
-		min-width: 1.5rem;
-		padding: 0 var(--space-2);
-		border-radius: var(--radius-pill);
-		background: var(--color-accent-soft);
-		color: var(--color-accent);
-		font-size: var(--text-xs);
-		font-weight: 600;
-		line-height: 1.5rem;
-		text-align: center;
-	}
-
-	a[aria-current='page'] .count {
-		background: rgb(255 255 255 / 0.18);
-		color: inherit;
+		color: var(--color-muted);
+		font-size: var(--text-sm);
+		font-variant-numeric: tabular-nums;
 	}
 
 	.label {
-		margin: var(--space-2) var(--space-4) 0;
+		margin: var(--space-4) var(--space-4) var(--space-1);
 		color: var(--color-muted);
 		font-size: var(--text-xs);
 		font-weight: 500;

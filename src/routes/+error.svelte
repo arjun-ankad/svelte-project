@@ -11,7 +11,7 @@
 
 {#if page.status === 404}
 	<EmptyState title="Not on view" message={page.error?.message ?? 'This page doesn’t exist.'}>
-		<a class="pill glass" href="/">Back to Top Art</a>
+		<a class="pill glass" href="/">Back to highlights</a>
 	</EmptyState>
 {:else}
 	<ErrorState message={page.error?.message ?? 'Something went wrong.'} onretry={invalidateAll} />

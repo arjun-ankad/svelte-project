@@ -22,7 +22,7 @@
 	);
 
 	// Return to the exact list the visitor came from, including their search and page.
-	let back = $state({ href: '/', label: 'Top Art' });
+	let back = $state({ href: '/', label: 'highlights' });
 
 	afterNavigate(({ from }) => {
 		if (from?.route.id === '/') back = { href: from.url.pathname + from.url.search, label: 'the collection' };
@@ -174,9 +174,10 @@
 			align-items: start;
 		}
 
+		/* Pinned just below the sticky header. */
 		figure {
 			position: sticky;
-			top: var(--space-5);
+			top: 6.5rem;
 		}
 	}
 </style>

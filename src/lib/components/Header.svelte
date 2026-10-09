@@ -22,14 +22,27 @@
 </header>
 
 <style>
+	/* Stays pinned while the page scrolls. The fade keeps the controls legible over artwork,
+	   and lets clicks through to the art beneath everywhere except the controls themselves. */
 	header {
-		position: relative;
+		position: sticky;
+		top: 0;
 		z-index: 10;
+		background: linear-gradient(to bottom, var(--color-bg) 45%, rgb(239 238 234 / 0));
+		pointer-events: none;
 		display: grid;
 		grid-template-columns: 1fr auto 1fr;
 		align-items: center;
 		gap: var(--space-4);
 		padding: var(--space-5) var(--gutter);
+	}
+
+	header > * {
+		pointer-events: auto;
+	}
+
+	.start {
+		justify-self: start;
 	}
 
 	.end {
