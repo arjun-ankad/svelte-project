@@ -80,7 +80,7 @@
 
 				{#if onneedmore}
 					<!-- Asks for more as this column's end nears; shows a spinner if it's reached first. -->
-					<div class="end" {@attach nearViewport(onneedmore, artworks.length)}>
+					<div class="end" {@attach nearViewport(onneedmore, [artworks.length, loadingMore])}>
 						{#if loadingMore}
 							<Spinner />
 						{/if}

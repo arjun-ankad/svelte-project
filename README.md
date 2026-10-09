@@ -32,7 +32,7 @@ All requests live in [`src/lib/api.js`](src/lib/api.js).
 
 ### Working with the Met API
 
-- **Search returns only object ids.** Each page therefore fetches its objects separately, at most 6 at a time.
+- **Search returns only object ids, and object requests can be slow** (2–25 seconds each at busy times). The `Feed` class (`src/lib/feed.svelte.js`) fetches objects 10 at a time and adds each artwork the moment it arrives, so one slow request never holds up the page.
 - **The API has no popularity data.** Curator-flagged highlights stand in for it. Each search fetches its highlighted paintings and other highlights as two full id lists (one request each), puts them first, and skips them when they reappear in the general results.
 - **Many matching works have no open-access image.** `getArtworks` walks through the results until it has a full page of works with images (at most 2 batches), then returns a cursor for Load more.
 - **The API blocks bursts of more than about 70 requests.** For that reason:
@@ -47,10 +47,11 @@ src/
   app.css                       design tokens (color, type, space, radius, shadow, glass) and base styles
   lib/
     api.js                      every fetch, plus caching and response shaping
+    feed.svelte.js              Feed: rune-based class that fills a list progressively, with retry
     stores/favorites.svelte.js  shared rune-based store ($state + $derived), persisted to localStorage
     attachments/drift.js        per-column speeds and idle auto-scroll on the landing page
     attachments/nearViewport.js IntersectionObserver trigger for infinite loading
-    components/                 Header, Menu, NewYorkNow, SearchBar, ArtworkFeed, ArtworkGrid,
+    components/                 Header, Menu, NewYorkNow, SearchBar, ArtworkGrid,
                                 ArtworkCard, ArtImage, FavoriteButton, Skeleton, Spinner, EmptyState, ErrorState
   routes/
     +layout.js / +layout.svelte header, weather, view transitions
@@ -60,11 +61,11 @@ src/
     +error.svelte               404 and error page
 ```
 
-- **Data** is fetched in SvelteKit `load` functions. The list's `load` returns its promise without awaiting it, so skeletons show immediately and `{#await}` fills them in.
+- **Data** is fetched in SvelteKit `load` functions. The list's `load` returns a `Feed` that starts fetching straight away, so skeletons show immediately and artworks fill in one by one.
 - **State:**
   - The URL holds the search.
   - A shared class with `$state` holds favorites.
-  - `ArtworkFeed` extends its list with writable `$derived` values as you scroll.
+  - A `Feed` instance (`$state` fields) holds each list. The route's `load` creates it, and the page reads it reactively.
   - UI-only state stays local to its component, such as whether an image has loaded or the menu is open.
 - **Masonry grid:** `ArtworkGrid` deals artworks into columns, and the column count is a `$derived` value from the container's bound width.
   - Each image finishing loading only moves the tiles below it, rather than reshuffling the whole layout as CSS columns would.

@@ -4,10 +4,6 @@ const API = 'https://collectionapi.metmuseum.org/public/collection';
 
 export const PAGE_SIZE = 24;
 
-// Keep each page to at most 2 × 25 requests, 6 at a time, well inside the API's burst limit.
-const MAX_BATCHES = 2;
-const CONCURRENCY = 6;
-
 /**
  * @typedef {{
  *   id: number,
@@ -29,56 +25,25 @@ const CONCURRENCY = 6;
  */
 
 /**
- * A shuffled wall of highlighted paintings for the landing page, or search results when `q` is given. Searches put the Met's
- * most notable matches first: highlighted paintings, then other highlights, then everything else.
- *
- * Search returns only ids, and many matching works have no open-access image. So this walks
- * the ranked ids in batches, fetching each batch's objects in parallel, until it has a full page
- * of works with images (or runs out). `next` is the position to continue from.
+ * One list artwork, or `null` if it has no open-access image (or, with `paintingsOnly`,
+ * isn't a painting). Throws if the request fails, so the caller can retry.
  * @param {typeof fetch} fetch
- * @param {{ q?: string, start?: number }} options
- * @returns {Promise<{ artworks: Artwork[], next: number | null, total: number }>}
+ * @param {number} id
+ * @param {{ paintingsOnly?: boolean }} [options]
+ * @returns {Promise<Artwork | null>}
  */
-export async function getArtworks(fetch, { q = '', start = 0 } = {}) {
-	/** @type {Artwork[]} */
-	const artworks = [];
-	let offset = start;
-	let length = 0;
-	let total = 0;
+export async function getFeedArtwork(fetch, id, { paintingsOnly = false } = {}) {
+	const object = await getObject(fetch, id);
 
-	for (let batch = 0; batch < MAX_BATCHES && artworks.length < PAGE_SIZE; batch++) {
-		const page = await getIdPage(fetch, q, offset);
-		({ length, total } = page);
-		if (page.ids.length === 0) break;
-
-		const results = await mapWithLimit(page.ids, CONCURRENCY, (id) =>
-			id === null
-				? Promise.resolve({ object: null, failed: false })
-				: getObject(fetch, id).then(
-						(object) => ({ object, failed: false }),
-						() => ({ object: null, failed: true })
-					)
-		);
-
-		for (const { object, failed } of results) {
-			if (failed) {
-				// Stop at the first failed request (usually rate limiting), so that object is
-				// retried next time rather than skipped. With nothing to show, report failure.
-				if (artworks.length === 0) throw new Error('The Met is not responding');
-				return { artworks, next: offset, total };
-			}
-
-			offset += 1;
-			if (object?.primaryImageSmall && (q || isPainting(object))) artworks.push(toArtwork(object));
-			if (artworks.length === PAGE_SIZE) break;
-		}
-	}
-
-	return { artworks, next: offset < length ? offset : null, total };
+	if (!object?.primaryImageSmall) return null;
+	if (paintingsOnly && !isPainting(object)) return null;
+	return toArtwork(object);
 }
 
 /**
- * One page of the ordered ids behind a feed, starting at `offset`. `length` is the size of the
+ * One page of the ordered ids behind a feed, starting at `offset`: a shuffled wall of highlighted
+ * paintings for the landing page, or search results with the Met's most notable matches first
+ * (highlighted paintings, then other highlights, then everything else). `length` is the size of the
  * whole ordered list; `total` is the number of matching works. Featured works reappear in the
  * general results, so there they come back as `null`: skipped, but still counted as a position.
  * @param {typeof fetch} fetch
@@ -86,7 +51,7 @@ export async function getArtworks(fetch, { q = '', start = 0 } = {}) {
  * @param {number} offset
  * @returns {Promise<{ ids: (number | null)[], length: number, total: number }>}
  */
-async function getIdPage(fetch, q, offset) {
+export async function getFeedIds(fetch, q, offset) {
 	if (!q) {
 		const ids = await getLandingIds(fetch);
 		return { ids: ids.slice(offset, offset + PAGE_SIZE), length: ids.length, total: ids.length };
@@ -277,31 +242,6 @@ function getObject(fetch, id) {
 		if (err.status === 404) return null;
 		throw err;
 	});
-}
-
-/**
- * Like `Promise.all(items.map(fn))`, but with at most `limit` calls in flight,
- * to keep request bursts gentle.
- * @template T, R
- * @param {T[]} items
- * @param {number} limit
- * @param {(item: T) => Promise<R>} fn
- * @returns {Promise<R[]>}
- */
-async function mapWithLimit(items, limit, fn) {
-	/** @type {R[]} */
-	const results = [];
-	let next = 0;
-
-	async function worker() {
-		while (next < items.length) {
-			const index = next++;
-			results[index] = await fn(items[index]);
-		}
-	}
-
-	await Promise.all(Array.from({ length: limit }, worker));
-	return results;
 }
 
 /**
