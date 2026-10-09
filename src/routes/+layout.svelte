@@ -2,7 +2,6 @@
 	import '../app.css';
 	import { onMount } from 'svelte';
 	import { onNavigate } from '$app/navigation';
-	import favicon from '#lib/assets/favicon.svg';
 	import Header from '#lib/components/Header.svelte';
 	import { favorites } from '#lib/stores/favorites.svelte.js';
 
@@ -26,10 +25,6 @@
 	});
 </script>
 
-<svelte:head>
-	<link rel="icon" href={favicon} />
-</svelte:head>
-
 <a class="skip-link" href="#main">Skip to content</a>
 
 <Header weather={data.weather} />
@@ -38,9 +33,21 @@
 	{@render children()}
 </main>
 
+<footer>
+	An unofficial project. Collection data and images courtesy of
+	<a href="https://metmuseum.github.io/" target="_blank" rel="noreferrer">The Met Open Access</a>.
+</footer>
+
 <style>
 	main {
-		padding: 0 var(--gutter) calc(var(--space-8) + 3.5rem);
+		padding: 0 var(--gutter);
+	}
+
+	footer {
+		padding: var(--space-7) var(--gutter) calc(var(--space-8) + 3.5rem);
+		color: var(--color-muted);
+		font-size: var(--text-xs);
+		text-align: center;
 	}
 
 	.skip-link {

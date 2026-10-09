@@ -1,23 +1,12 @@
 <script>
-	import { imageUrl } from '#lib/api.js';
-
 	/**
-	 * @type {{
-	 *   imageId: string | null,
-	 *   alt: string,
-	 *   thumbnail?: import('#lib/api.js').Thumbnail,
-	 *   width?: number,
-	 *   eager?: boolean
-	 * }}
+	 * `square` crops to a square tile; otherwise the image keeps its natural shape.
+	 * @type {{ src: string | null, alt: string, square?: boolean, eager?: boolean }}
 	 */
-	let { imageId, alt, thumbnail = null, width = 400, eager = false } = $props();
+	let { src, alt, square = false, eager = false } = $props();
 
 	let loaded = $state(false);
 	let failed = $state(false);
-
-	const ratio = $derived(
-		thumbnail?.width && thumbnail?.height ? `${thumbnail.width} / ${thumbnail.height}` : '4 / 5'
-	);
 
 	// Images that finished loading before hydration never fire `onload`.
 	/** @param {HTMLImageElement} img */
@@ -26,16 +15,11 @@
 	}
 </script>
 
-<div
-	class="frame"
-	style:aspect-ratio={ratio}
-	style:background-image={thumbnail?.lqip ? `url(${thumbnail.lqip})` : undefined}
->
-	{#if imageId && !failed}
+<div class={['frame', { square, loaded }]}>
+	{#if src && !failed}
 		<img
-			src={imageUrl(imageId, width)}
+			{src}
 			{alt}
-			class:loaded
 			loading={eager ? 'eager' : 'lazy'}
 			decoding="async"
 			onload={() => (loaded = true)}
@@ -62,31 +46,40 @@
 	.frame {
 		position: relative;
 		overflow: hidden;
-		background-color: var(--color-placeholder);
-		background-size: cover;
-		background-position: center;
+		background: var(--color-placeholder);
+	}
+
+	/* Hold a placeholder shape until a natural-size image arrives. */
+	.frame:not(.loaded) {
+		aspect-ratio: 4 / 5;
+	}
+
+	.frame.square {
+		aspect-ratio: 1;
 	}
 
 	img {
 		width: 100%;
-		height: 100%;
-		object-fit: cover;
 		opacity: 0;
-		filter: blur(8px);
-		transform: scale(1.02);
+		transform: scale(1.03);
 		transition:
 			opacity 500ms var(--ease-out),
-			filter 600ms var(--ease-out),
-			transform 600ms var(--ease-out);
+			transform 700ms var(--ease-out);
 	}
 
-	img.loaded {
+	.square img,
+	.frame:not(.loaded) img {
+		position: absolute;
+		inset: 0;
+		height: 100%;
+		object-fit: cover;
+	}
+
+	.loaded img {
 		opacity: 1;
-		filter: none;
 		transform: none;
 	}
 
-	/* The blurred LQIP (if any) stays visible behind this label. */
 	.missing {
 		position: absolute;
 		inset: 0;
@@ -94,8 +87,7 @@
 		place-content: center;
 		justify-items: center;
 		gap: var(--space-2);
-		background: rgb(239 238 234 / 0.35);
-		color: var(--color-text);
+		color: var(--color-muted);
 		font-size: var(--text-xs);
 		font-weight: 500;
 	}

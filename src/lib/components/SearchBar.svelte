@@ -149,13 +149,6 @@
 		appearance: none;
 	}
 
-	.search:focus-within {
-		box-shadow:
-			var(--shadow-glass),
-			0 0 0 2px var(--color-accent-soft),
-			0 0 0 1px var(--color-accent);
-	}
-
 	.toggle {
 		display: grid;
 		flex: none;
@@ -169,8 +162,10 @@
 		color: var(--color-text);
 	}
 
+	/* A quiet, neutral focus cue instead of the global accent outline. */
 	.toggle:focus-visible {
 		outline: none;
+		background: rgb(28 27 25 / 0.06);
 	}
 
 	svg {

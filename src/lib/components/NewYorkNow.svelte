@@ -3,7 +3,7 @@
 	let { weather } = $props();
 
 	const formatter = new Intl.DateTimeFormat('en-US', {
-		timeZone: 'America/Chicago',
+		timeZone: 'America/New_York',
 		hour: 'numeric',
 		minute: '2-digit'
 	});
@@ -19,7 +19,7 @@
 </script>
 
 <div class="now glass">
-	<span class="city">Chicago</span>
+	<span class="city">New York</span>
 	<time datetime={now.toISOString()}>{time}</time>
 	{#await weather then current}
 		{#if current}

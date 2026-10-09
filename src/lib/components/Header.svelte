@@ -1,6 +1,7 @@
 <script>
 	import Menu from './Menu.svelte';
-	import ChicagoNow from './ChicagoNow.svelte';
+	import NewYorkNow from './NewYorkNow.svelte';
+	import logo from '#lib/assets/the-met.png';
 
 	/** @type {{ weather: Promise<{ temperature: number, label: string } | null> }} */
 	let { weather } = $props();
@@ -11,17 +12,12 @@
 		<Menu />
 	</div>
 
-	<a href="/" class="logo" aria-label="Art Explorer, home">
-		<svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
-			<rect x="3" y="3" width="26" height="26" rx="7" fill="var(--color-text)" />
-			<path d="M10 23V14a6 6 0 0 1 12 0v9" fill="none" stroke="var(--color-bg)" stroke-width="2" />
-			<circle cx="16" cy="14" r="2" fill="var(--color-accent)" />
-		</svg>
-		<span class="wordmark">Art Explorer</span>
+	<a href="/" class="logo">
+		<img src={logo} alt="The Met, home" width="52" height="52" />
 	</a>
 
 	<div class="end">
-		<ChicagoNow {weather} />
+		<NewYorkNow {weather} />
 	</div>
 </header>
 
@@ -41,23 +37,12 @@
 	}
 
 	.logo {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--space-3);
-		text-decoration: none;
+		display: block;
 		border-radius: var(--radius-sm);
 	}
 
-	.wordmark {
-		font-family: var(--font-serif);
-		font-size: var(--text-lg);
-		font-weight: 500;
-		letter-spacing: -0.02em;
-	}
-
-	@media (max-width: 34rem) {
-		.wordmark {
-			display: none;
-		}
+	.logo img {
+		width: 3.25rem;
+		height: auto;
 	}
 </style>

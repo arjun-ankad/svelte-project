@@ -7,16 +7,17 @@
 	let { data } = $props();
 
 	const artwork = $derived(data.artwork);
-	const artist = $derived(artwork.artist_title ?? 'Unknown artist');
+	const artist = $derived(artwork.artist ?? 'Unknown artist');
 
 	const details = $derived(
 		[
-			['Artist', artwork.artist_display],
-			['Date', artwork.date_display],
-			['Medium', artwork.medium_display],
+			['Artist', [artwork.artist, artwork.artistBio].filter(Boolean).join('\n')],
+			['Date', artwork.date],
+			['Medium', artwork.medium],
 			['Dimensions', artwork.dimensions],
-			['Origin', artwork.place_of_origin],
-			['Credit', artwork.credit_line]
+			['Origin', artwork.origin],
+			['Department', artwork.department],
+			['Credit', artwork.credit]
 		].filter(([, value]) => value)
 	);
 
@@ -40,33 +41,19 @@
 
 	<article class="detail">
 		<figure style:view-transition-name="art-{artwork.id}">
-			<ArtImage
-				imageId={artwork.image_id}
-				thumbnail={artwork.thumbnail}
-				alt="{artwork.title} by {artist}"
-				width={843}
-				eager
-			/>
+			<ArtImage src={artwork.image} alt="{artwork.title} by {artist}" eager />
 		</figure>
 
 		<div class="info">
 			<header>
 				<p class="eyebrow">{artist}</p>
 				<h1>{artwork.title}</h1>
-				{#if artwork.date_display}
-					<p class="date">{artwork.date_display}</p>
+				{#if artwork.date}
+					<p class="date">{artwork.date}</p>
 				{/if}
 			</header>
 
 			<FavoriteButton {artwork} labelled />
-
-			{#if artwork.description.length}
-				<div class="description">
-					{#each artwork.description as paragraph, i (i)}
-						<p>{paragraph}</p>
-					{/each}
-				</div>
-			{/if}
 
 			<dl>
 				{#each details as [term, value] (term)}
@@ -77,8 +64,8 @@
 				{/each}
 			</dl>
 
-			<a class="source" href="https://www.artic.edu/artworks/{artwork.id}" target="_blank" rel="noreferrer">
-				View on artic.edu <span aria-hidden="true">↗</span>
+			<a class="source" href={artwork.url} target="_blank" rel="noreferrer">
+				View on metmuseum.org <span aria-hidden="true">↗</span>
 			</a>
 		</div>
 	</article>
@@ -146,13 +133,6 @@
 		color: var(--color-muted);
 		font-size: var(--text-lg);
 		font-family: var(--font-serif);
-	}
-
-	.description {
-		display: grid;
-		gap: var(--space-3);
-		max-width: 62ch;
-		line-height: 1.7;
 	}
 
 	dl {

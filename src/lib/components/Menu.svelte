@@ -7,9 +7,9 @@
 
 	const collections = [
 		{ label: 'Impressionism', q: 'impressionism' },
-		{ label: 'Japanese prints', q: 'japanese woodblock' },
-		{ label: 'Sculpture', q: 'sculpture' },
-		{ label: 'Photography', q: 'photography' }
+		{ label: 'Egyptian art', q: 'egyptian' },
+		{ label: 'Arms & armor', q: 'armor' },
+		{ label: 'Japanese prints', q: 'japanese print' }
 	];
 
 	let open = $state(false);
@@ -105,11 +105,13 @@
 		stroke: currentColor;
 		stroke-width: 1.6;
 		stroke-linecap: round;
+		/* Rotate each line around its own centre, so both meet exactly in the middle. */
+		transform-box: fill-box;
 		transform-origin: center;
 		transition: transform var(--duration) var(--ease-out);
 	}
 
-	/* The two lines rotate into an ×. */
+	/* The lines sit 4 units above and below centre; move each to the centre, then rotate into an ×. */
 	svg.open .top {
 		transform: translateY(4px) rotate(45deg);
 	}
@@ -131,16 +133,16 @@
 		background: var(--glass-bg-strong);
 	}
 
-	/* Glass pill buttons */
+	/* Glass pill buttons, with the same edge as other glass surfaces */
 	a {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		padding: var(--space-3) var(--space-4);
 		border-radius: var(--radius-pill);
-		background: rgb(255 255 255 / 0.45);
-		border: 1px solid rgb(255 255 255 / 0.8);
-		box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.7);
+		background: var(--glass-bg);
+		border: 1px solid var(--glass-line);
+		box-shadow: var(--glass-highlight);
 		font-size: var(--text-sm);
 		font-weight: 500;
 		letter-spacing: -0.005em;
@@ -151,13 +153,14 @@
 	}
 
 	a:hover {
-		background: rgb(255 255 255 / 0.85);
+		background: var(--glass-bg-strong);
 		transform: translateX(2px);
 	}
 
 	a[aria-current='page'] {
 		background: var(--color-text);
 		border-color: var(--color-text);
+		box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.15);
 		color: var(--color-surface);
 	}
 

@@ -1,6 +1,6 @@
 /** @typedef {import('#lib/api.js').Artwork} Artwork */
 
-const STORAGE_KEY = 'art-explorer:favorites';
+const STORAGE_KEY = 'art-explorer:met-favorites';
 
 class Favorites {
 	/** @type {Artwork[]} */
@@ -20,12 +20,11 @@ class Favorites {
 	 * Stores just enough to render a card, so the favorites page needs no API calls.
 	 * @param {Artwork} artwork
 	 */
-	toggle({ id, title, artist_title, date_display, image_id, thumbnail }) {
+	toggle({ id, title, artist, date, image }) {
 		if (this.has(id)) {
 			this.items = this.items.filter((item) => item.id !== id);
 		} else {
-			const lean = thumbnail && { lqip: thumbnail.lqip, width: thumbnail.width, height: thumbnail.height };
-			this.items = [{ id, title, artist_title, date_display, image_id, thumbnail: lean }, ...this.items];
+			this.items = [{ id, title, artist, date, image }, ...this.items];
 		}
 
 		this.#save();
